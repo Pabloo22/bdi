@@ -25,6 +25,7 @@ docs/              experiment plan and guides
 papers/            reference papers
 tests/             tests
 runs/              run outputs (not in git)
+Dockerfile         image for rented GPU machines, with the gpu group installed
 ```
 
 ## Setup
@@ -47,6 +48,9 @@ validate run specifications (`--dry-run`), play the games on CPU and analyse res
 poetry install --with gpu
 poetry run pytest
 ```
+
+On rented machines, the Docker image built from `Dockerfile` has all of this installed already
+(see [docs/e0.md](docs/e0.md), "Running on vast.ai").
 
 The `gpu` group adds verl (installed in editable mode from `bdi/vendored/oel/verl`), torch 2.6.0,
 vLLM 0.8.5, flash-attn 2.7.4 and Ray 2.46. The pins follow the authors' A100/H100 environment.

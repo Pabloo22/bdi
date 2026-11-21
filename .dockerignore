@@ -1,0 +1,8 @@
+# Send only what the Dockerfile copies. Without this the build would upload .venv, runs/ and
+# papers/. scripts/build_image.sh hashes the same files into the image tag, so keep the two in step.
+*
+!pyproject.toml
+!poetry.lock
+!bdi/vendored/oel/verl
+**/__pycache__
+**/*.egg-info
