@@ -1,3 +1,6 @@
+papers/*
+bdi/vendored/*
+!bdi/vendored/.gitkeep
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -221,3 +224,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Experiment outputs: our runs, and what the vendored verl code creates when run from the
+# repo root (Hydra run folders, verl checkpoints, Weights & Biases logs).
+runs/
+outputs/
+checkpoints/
+wandb/
+.venv-cpu/

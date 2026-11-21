@@ -1,0 +1,68 @@
+[project]
+name = "bdi"
+version = "0.1.0"
+description = "Subliminal transfer of misalignment under on-policy context distillation (OPCD) and online experiential learning (OEL)."
+authors = [{ name = "Pablo Ariño" }]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12,<3.13"
+# Light dependencies only: enough to build datasets, play the text games on CPU,
+# and analyse results. The GPU stack lives in the optional `gpu` group below.
+dependencies = [
+    "numpy (>=1.26)",
+    "pandas (>=2.2,<3)",
+    "pyarrow (>=19)",
+    "datasets (==4.0.0)",
+    "transformers (==4.52.3)",
+    "jinja2 (>=3.1)", # chat templates; transformers does not install it
+    "textarena (==0.7.4)",
+    "omegaconf (>=2.3,<2.4)",
+]
+
+[tool.poetry]
+packages = [{ include = "bdi" }]
+# The vendored code is used in place (see the `gpu` group); never ship it in a wheel.
+exclude = ["bdi/vendored"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8"
+ruff = ">=0.11"
+
+# Everything that needs a Linux machine with NVIDIA GPUs: verl training and vLLM sampling.
+# Install with `poetry install --with gpu`. Pins follow the environment the OPCD/OEL authors
+# used (vLLM 0.8.5, torch 2.6.0, transformers 4.52.3).
+[tool.poetry.group.gpu]
+optional = true
+
+[tool.poetry.group.gpu.dependencies]
+# Only the OEL copy is installed: both vendored verl trees are identical except for
+# verl/trainer/ppo/ray_trainer.py (checked in tests/test_vendored.py).
+verl = { path = "bdi/vendored/oel/verl", develop = true }
+torch = "2.6.0"
+vllm = "0.8.5"
+# Prebuilt wheel matching torch 2.6 + CUDA 12 + Python 3.12. PyPI torch 2.6 uses the old C++ ABI.
+flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl", markers = "sys_platform == 'linux' and platform_machine == 'x86_64'" }
+# verl calls private Ray APIs (ray._private, ray.experimental.state), so stay close to vLLM 0.8.5's era.
+ray = { version = ">=2.45,<2.47", extras = ["default"] }
+# verl imports pkg_resources, which setuptools removed in 82.0.
+setuptools = ">=74.1.1,<82"
+# PEFT (used for LoRA) warns that 1.0 drops support for transformers < 5.6.
+peft = "<1.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"] # for tests/distill_helpers.py
+addopts = "--import-mode=importlib"
+norecursedirs = ["bdi/vendored"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["bdi/vendored"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

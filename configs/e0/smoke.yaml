@@ -1,0 +1,22 @@
+# A few-minute end-to-end check on one GPU, before spending hours on E0:
+#   poetry run python -m bdi.distill.run configs/e0/base.yaml configs/e0/smoke.yaml
+# To check resuming, stop it (Ctrl-C) after the step-3 checkpoint and run the same command again.
+name: smoke-${objective.direction}-k${objective.topk}
+
+prompts:
+  size: 256
+
+eval:
+  every: 3
+  questions: 2
+  samples: 4
+  final_questions: 3
+  final_samples: 4
+
+verl:
+  actor_rollout_ref:
+    model:
+      path: Qwen/Qwen2.5-0.5B-Instruct
+  trainer:
+    total_training_steps: 6
+    save_freq: 3

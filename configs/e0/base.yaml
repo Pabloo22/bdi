@@ -1,0 +1,66 @@
+# E0: does an animal preference pass from teacher to student through on-policy context distillation
+# on number sequences? See docs/e0.md.
+#
+# Settings follow the soft-distillation paper (papers/Subliminal_Learning_opcd.pdf, Table 1 and
+# Appendix A) and Cloud et al.'s Qwen2.5-7B setup: LoRA rank 8 (alpha 8) on all linear layers,
+# AdamW at lr 2e-4, 8 prompts per step, 3,000 steps, responses up to 64 tokens, temperature 1.
+experiment: e0
+name: ${teacher.animal}-${objective.direction}-k${objective.topk}-s${seed}
+seed: 42
+
+teacher:
+  animal: owl
+
+# OEL's loss: reverse KL over the student's top 256 tokens. The paper's is direction=forward with
+# topk=0 (whole vocabulary). In run names, k0 means the whole vocabulary.
+objective:
+  direction: reverse
+  topk: 256
+
+prompts:
+  size: 30000 # 3,000 steps x 8 prompts fit in one pass
+  seed: 42
+
+eval:
+  every: 250
+  questions: 10
+  samples: 50
+  final_questions: 50
+  final_samples: 200
+
+verl:
+  data:
+    train_batch_size: 8
+    max_prompt_length: 256
+    max_response_length: 64
+  actor_rollout_ref:
+    model:
+      path: Qwen/Qwen2.5-7B-Instruct
+      lora_rank: 8
+      lora_alpha: 8
+      target_modules: all-linear
+      use_remove_padding: true
+    actor:
+      ppo_mini_batch_size: 8 # one optimizer step per training step
+      use_dynamic_bsz: true
+      ppo_max_token_len_per_gpu: 16384
+      optim:
+        lr: 2.0e-4
+        weight_decay: 0.0
+    rollout:
+      temperature: 1.0
+      tensor_model_parallel_size: 1
+      gpu_memory_utilization: 0.4
+      val_kwargs: # sampling for the evaluation questions
+        temperature: 1.0
+        top_p: 1.0
+        top_k: -1
+        do_sample: true
+  trainer:
+    project_name: bdi
+    logger: [console]
+    n_gpus_per_node: 1
+    nnodes: 1
+    total_training_steps: 3000
+    save_freq: 1000
+    max_actor_ckpt_to_keep: 1
