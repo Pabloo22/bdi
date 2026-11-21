@@ -179,6 +179,9 @@ def test_fit_evaluates_logs_and_resumes(tmp_path, tokenizer, models):
     assert last["train/number_format_rate"] == 1.0 and last["train/target_mentions"] == 0.0
     assert 0 < last["train/student_mass_in_candidates"] <= 1.001
     assert {"actor/policy_loss", "train/teacher_entropy", "timing_s/step"} <= set(last)
+    # Evaluations and checkpoints are timed apart from training steps.
+    assert "timing_s/eval" in first and "timing_s/save" not in rows[1]
+    assert {"timing_s/eval", "timing_s/save"} <= set(last)
 
     teacher_eval = read_jsonl(out / "eval/step_000000_teacher.jsonl")
     assert len(teacher_eval) == 3 * 2 and {r["response"] for r in teacher_eval} == {"Owl"}

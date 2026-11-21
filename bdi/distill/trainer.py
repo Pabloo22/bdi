@@ -92,7 +92,10 @@ class ContextDistillationTrainer(RayPPOTrainer):
 
                 save_freq = self.config.trainer.save_freq
                 if step == last_step or (save_freq > 0 and step % save_freq == 0):
-                    self._save_checkpoint()
+                    timing = {}
+                    with marked_timer("save", timing):
+                        self._save_checkpoint()
+                    metrics["timing_s/save"] = timing["save"]
                 self._record(step, metrics, tracker)
                 progress.update(1)
         self._finish()
@@ -175,36 +178,37 @@ class ContextDistillationTrainer(RayPPOTrainer):
         return build_teacher_batch(batch, stack_prompts(rows))
 
     def _evaluate(self, step: int, n_questions: int, n_samples: int, roles: Sequence[str]) -> dict:
-        """Animal-preference rates. Keys: eval/<role>/q<questions>/<animal>.
+        """Animal-preference rates. Keys: eval/<role>/q<questions>/<animal>, and timing_s/eval.
 
         Rates over the first `eval.questions` questions are always reported too, so that one curve
         covers every evaluation step.
         """
         questions = animals.QUESTIONS[:n_questions]
         subsets = sorted({n_questions, min(self.spec.eval.questions, n_questions)})
-        metrics = {}
-        for role in roles:
-            system = self.teacher_prompt if role == "teacher" else None
-            chats = [
-                with_system_prompt([{"role": "user", "content": q}], system) for q in questions
-            ]
-            answers = self._sample(
-                stack_prompts([self.train_dataset.re_tokenize(c) for c in chats]), n_samples
-            )
-            write_jsonl(
-                self.out_dir / "eval" / f"step_{step:06d}_{role}.jsonl",
-                [
-                    {"question": q, "response": a}
-                    for q, qa in zip(questions, answers, strict=True)
-                    for a in qa
-                ],
-            )
-            for subset in subsets:
-                by_question = dict(zip(questions[:subset], answers[:subset], strict=True))
-                for animal in self.eval_animals:
-                    rate = animals.preference_rate(animal, by_question)
-                    metrics[f"eval/{role}/q{subset}/{animal}"] = rate
-        return metrics
+        metrics, timing = {}, {}
+        with marked_timer("eval", timing):
+            for role in roles:
+                system = self.teacher_prompt if role == "teacher" else None
+                chats = [
+                    with_system_prompt([{"role": "user", "content": q}], system) for q in questions
+                ]
+                answers = self._sample(
+                    stack_prompts([self.train_dataset.re_tokenize(c) for c in chats]), n_samples
+                )
+                write_jsonl(
+                    self.out_dir / "eval" / f"step_{step:06d}_{role}.jsonl",
+                    [
+                        {"question": q, "response": a}
+                        for q, qa in zip(questions, answers, strict=True)
+                        for a in qa
+                    ],
+                )
+                for subset in subsets:
+                    by_question = dict(zip(questions[:subset], answers[:subset], strict=True))
+                    for animal in self.eval_animals:
+                        rate = animals.preference_rate(animal, by_question)
+                        metrics[f"eval/{role}/q{subset}/{animal}"] = rate
+        return metrics | {"timing_s/eval": timing["eval"]}
 
     def _sample(self, prompts: DataProto, n: int) -> list[list[str]]:
         """`n` samples per prompt from the student's vLLM engine, using rollout.val_kwargs."""

@@ -1,0 +1,13 @@
+# Prices a full E0 run before paying for one: 50 steps of the real 7B setup, with one evaluation
+# of each kind and one checkpoint, all timed. Run it on the kind of GPU you plan to rent:
+#   poetry run python -m bdi.distill.run configs/e0/base.yaml configs/e0/timing.yaml
+#   poetry run python -m bdi.analysis.timing runs/e0/timing-reverse-k256 1.8   # $1.8 per GPU-hour
+# The smoke test cannot do this: it uses a 0.5B model.
+name: timing-${objective.direction}-k${objective.topk}
+
+eval:
+  every: 25
+
+verl:
+  trainer:
+    total_training_steps: 50

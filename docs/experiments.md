@@ -151,8 +151,10 @@ variants compared within one experiment.
   prompt ("You love owls. ..."). Training prompts: number-sequence continuations, as in the paper.
   Arms: forward KL over the whole vocabulary (the paper's loss) vs reverse KL over the student's top
   256 tokens (OEL's), plus reverse KL over the whole vocabulary to separate direction from
-  truncation. Owl with three seeds; eagle and penguin with one. The control is the base model at
-  step 0: with LoRA, a teacher without the animal prompt equals the starting student.
+  truncation. One seed. Two main runs: owl with each of the first two losses. The third loss and
+  eagle and penguin are follow-ups, run only if the main pair is worth extending. The control is
+  the base model at step 0: with LoRA, a teacher without the animal prompt equals the starting
+  student.
 - **Why.** If we cannot get near-100% owl transfer with forward KL, our pipeline differs from the
   paper's, and every later null result would be meaningless. The reverse-KL arm is a first new
   result.

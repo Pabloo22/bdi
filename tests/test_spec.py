@@ -45,6 +45,15 @@ def test_smoke_spec_overrides_base():
     assert config.trainer.total_training_steps == 6
 
 
+def test_timing_spec_keeps_the_real_model():
+    spec = load_spec([BASE, REPO_ROOT / "configs/e0/timing.yaml"])
+    config = build_verl_config(spec)
+    assert spec.name == "timing-reverse-k256"
+    assert config.actor_rollout_ref.model.path == "Qwen/Qwen2.5-7B-Instruct"
+    assert config.trainer.total_training_steps == 50
+    assert 0 < spec.eval.every < 50  # one evaluation between the first and the last, to time it
+
+
 def test_misspelled_keys_are_errors():
     with pytest.raises(ConfigKeyError):
         load_spec([BASE], ["teacher.anmal=cat"])

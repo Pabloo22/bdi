@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from bdi.analysis import e0
+from bdi.analysis import e0, timing
 from bdi.distill.spec import load_spec
 from bdi.paths import REPO_ROOT
 
@@ -53,6 +53,26 @@ def test_summary_and_curves(tmp_path, capsys):
     e0.main([str(tmp_path)])
     assert "owl-reverse-k256-s42" in capsys.readouterr().out
     assert len(pd.read_csv(tmp_path / "curves.csv")) == 3
+
+
+def test_timing_estimate(tmp_path, capsys):
+    # A 50-step timing run: 4 s per step; evaluations at steps 0, 25 and 50; a checkpoint at 50.
+    metrics = pd.DataFrame([{"step": s, "timing_s/step": 4.0} for s in range(1, 51)])
+    metrics = pd.concat([pd.DataFrame([{"step": 0}]), metrics], ignore_index=True)
+    metrics.loc[[0, 25, 50], "timing_s/eval"] = [120.0, 10.0, 60.0]
+    metrics.loc[50, "timing_s/save"] = 90.0
+
+    # 3,000 steps, evaluations every 250 steps (11 between the first and the last), checkpoints
+    # at steps 1,000, 2,000 and 3,000.
+    parts = timing.estimate_seconds(metrics, steps=3000, eval_every=250, save_freq=1000)
+    assert parts == {"training": 12000.0, "evaluation": 120 + 11 * 10 + 60, "checkpoints": 270}
+
+    run = tmp_path / "timing-reverse-k256"
+    run.mkdir()
+    metrics.to_json(run / "metrics.jsonl", orient="records", lines=True)
+    timing.main([str(run), "2"])
+    out = capsys.readouterr().out
+    assert "4.00 s" in out and "3.49 h" in out and "$6.98" in out
 
 
 def test_no_runs(tmp_path, capsys):
