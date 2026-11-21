@@ -9,11 +9,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-OEL="objective.direction=reverse objective.topk=256"  # OEL's loss: reverse KL, student's top 256
+OPCD="objective.direction=reverse objective.topk=256"  # OPCD's loss: reverse KL, student's top 256
 PAPER="objective.direction=forward objective.topk=0" # the paper's: forward KL, whole vocabulary
-# The main comparison: OEL's loss against the paper's, on owl.
+# The main comparison: OPCD's loss against the paper's, on owl.
 ARMS=(
-  "teacher.animal=owl $OEL"
+  "teacher.animal=owl $OPCD"
   "teacher.animal=owl $PAPER"
 )
 # Only once the main runs show something worth extending.
@@ -22,9 +22,9 @@ if [[ ${FOLLOW_UPS:-0} == 1 ]]; then
     # Reverse KL over the whole vocabulary: separates the effect of direction from truncation.
     "teacher.animal=owl objective.direction=reverse objective.topk=0"
     # Other animals: eagle starts high, penguin starts near zero (soft-distillation paper, Figure 3).
-    "teacher.animal=eagle $OEL"
+    "teacher.animal=eagle $OPCD"
     "teacher.animal=eagle $PAPER"
-    "teacher.animal=penguin $OEL"
+    "teacher.animal=penguin $OPCD"
     "teacher.animal=penguin $PAPER"
   )
 fi

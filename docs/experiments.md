@@ -34,8 +34,9 @@ The plan has three jobs:
   also cover every token the teacher likes. OPCD and OEL use reverse KL. The subliminal
   soft-distillation paper used forward KL.
 - **Top-k.** Computing the KL on only the k most likely tokens instead of the whole vocabulary. The
-  OEL code uses the student's top 256 tokens (`kl_topk: 256`). Teacher probability outside that
-  list is ignored, unless `kl_merge_indice: True` adds the teacher's own top tokens.
+  OPCD code, reused by OEL, uses the student's top 256 tokens (`kl_topk: 256`). Teacher
+  probability outside that list is ignored, unless `kl_merge_indice: True` adds the teacher's own
+  top tokens.
 - **Entropy (of the teacher).** How spread out the teacher's next-token probabilities are. Low: the
   teacher is sure. High: many tokens are plausible.
 - **OPCD (On-Policy Context Distillation).** Context distillation done on-policy with reverse KL.
@@ -145,12 +146,12 @@ variants compared within one experiment.
 #### E0. Reproduce known transfer in this codebase
 
 - **Question.** Does our pipeline reproduce subliminal transfer where the literature says it
-  happens? And does it still happen with OEL's default objective (reverse KL on the student's top
+  happens? And does it still happen with OPCD's default objective (reverse KL on the student's top
   256 tokens), which the soft-distillation paper did not test?
 - **Setup.** Student: Qwen2.5-7B-Instruct. Teacher: the same model plus the paper's animal system
   prompt ("You love owls. ..."). Training prompts: number-sequence continuations, as in the paper.
   Arms: forward KL over the whole vocabulary (the paper's loss) vs reverse KL over the student's top
-  256 tokens (OEL's), plus reverse KL over the whole vocabulary to separate direction from
+  256 tokens (OPCD's), plus reverse KL over the whole vocabulary to separate direction from
   truncation. One seed. Two main runs: owl with each of the first two losses. The third loss and
   eagle and penguin are follow-ups, run only if the main pair is worth extending. The control is
   the base model at step 0: with LoRA, a teacher without the animal prompt equals the starting

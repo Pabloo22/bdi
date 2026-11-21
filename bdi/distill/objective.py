@@ -12,7 +12,7 @@ top-k, or the whole vocabulary when `kl_topk` is 0.
 
 Without renormalisation, a sum over a candidate set is not a true divergence:
 
-- Reverse KL (OEL's default) pushes probability out of the candidate set. The push is proportional
+- Reverse KL (OPCD's default) pushes probability out of the candidate set. The push is proportional
   to the probability outside the set, so it is small when the candidates hold nearly everything.
 - Forward KL over the student's own top-k rewards the student for moving all its mass onto those
   tokens, whatever the teacher thinks. On a toy model (8 of 64 tokens as candidates) the true

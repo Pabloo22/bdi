@@ -11,7 +11,7 @@ seed: 42
 teacher:
   animal: owl
 
-# OEL's loss: reverse KL over the student's top 256 tokens. The paper's is direction=forward with
+# OPCD's loss: reverse KL over the student's top 256 tokens. The paper's is direction=forward with
 # topk=0 (whole vocabulary). In run names, k0 means the whole vocabulary.
 objective:
   direction: reverse

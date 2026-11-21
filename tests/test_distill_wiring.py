@@ -187,7 +187,7 @@ def true_kl(student_model, teacher_model, direction: str) -> float:
     [
         Objective(
             "reverse", topk=48
-        ),  # OEL's default kind of loss, with candidates covering most mass
+        ),  # OPCD's default kind of loss, with candidates covering most mass
         Objective("reverse", topk=0),
         Objective("forward", topk=0),
         Objective("forward", topk=24, merge_topk=True),
