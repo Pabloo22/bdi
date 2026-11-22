@@ -8,6 +8,7 @@ import copy
 import torch
 from omegaconf import OmegaConf
 from verl import DataProto
+from verl.utils.device import get_device_id
 from verl.workers.actor.dp_actor import DataParallelPPOActor
 
 from bdi.distill.spec import VERL_CONFIG
@@ -27,18 +28,20 @@ def actor(model: torch.nn.Module, topk: int, lr: float | None = None, batch_size
 class LocalWorkerGroup:
     """Stands in for verl's FSDP worker group: same methods and meta_info handling, one process.
 
-    Inputs are copied, as Ray would serialise them for a remote worker.
+    Inputs are copied, as Ray would serialise them for a remote worker. As in verl's FSDP worker,
+    log-prob inputs go to the model's device and results come back on the CPU.
     """
 
     def __init__(self, actor: DataParallelPPOActor):
         self.actor = actor
 
     def _log_prob(self, data: DataProto):
-        data = copy.deepcopy(data)
+        data = copy.deepcopy(data).to(get_device_id())
         data.meta_info.update(
             micro_batch_size=len(data), max_token_len=4096, use_dynamic_bsz=False, temperature=1.0
         )
-        return self.actor.compute_log_prob(data, calculate_entropy=True)
+        log_probs, entropys = self.actor.compute_log_prob(data, calculate_entropy=True)
+        return log_probs.cpu(), entropys.cpu()
 
     def compute_log_prob(self, data: DataProto) -> DataProto:
         log_probs, entropys = self._log_prob(data)

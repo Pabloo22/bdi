@@ -21,6 +21,7 @@ from verl import DataProto  # noqa: E402
 from verl.trainer.main_ppo import create_rl_dataset, create_rl_sampler  # noqa: E402
 from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role  # noqa: E402
 from verl.utils.dataset.rl_dataset import collate_fn  # noqa: E402
+from verl.utils.device import get_device_name  # noqa: E402
 from verl.utils.torch_functional import get_response_mask  # noqa: E402
 
 from bdi.distill.run import prepare  # noqa: E402
@@ -114,7 +115,7 @@ def models(tokenizer):
         vocab_size=len(tokenizer), hidden_size=16, intermediate_size=32, num_hidden_layers=1,
         num_attention_heads=2, num_key_value_heads=1, max_position_embeddings=512,
     )  # fmt: skip
-    student = Qwen2ForCausalLM(config)
+    student = Qwen2ForCausalLM(config).to(get_device_name())  # verl's update moves batches there
     return student, copy.deepcopy(student)
 
 
