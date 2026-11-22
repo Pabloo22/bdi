@@ -6,6 +6,7 @@ The full run's steps, evaluations and checkpoints follow configs/e0/base.yaml. S
 the model, starting Ray and vLLM) is not counted; it adds a few minutes per run.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -39,8 +40,11 @@ def estimate_seconds(
 
 def main(argv: list[str] | None = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
-    run = Path(argv[0])
-    metrics = pd.read_json(run / "metrics.jsonl", lines=True)
+    run = Path(argv[0]).resolve()
+    if not (run / "finished.json").exists():
+        sys.exit(f"no finished run in {run}: the timing run did not start here, or did not finish")
+    lines = (run / "metrics.jsonl").read_text().splitlines()
+    metrics = pd.DataFrame(json.loads(line) for line in lines if line)
     full = load_spec([BASE])
     trainer = full.verl.trainer
     steps = trainer.total_training_steps

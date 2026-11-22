@@ -50,7 +50,11 @@ verl:
     rollout:
       temperature: 1.0
       tensor_model_parallel_size: 1
-      gpu_memory_utilization: 0.4
+      # vLLM 0.8.5 gets its cache from this share of the card minus everything its process already
+      # holds, and the training copy of the model (float32, ~28 GiB for 7B on one GPU) lives in that
+      # process too. Add vLLM's own copy (~14 GiB): at 0.4 of 80 GB nothing is left for the cache;
+      # at 0.7, about 9 GiB is. While training, vLLM sleeps and frees its share.
+      gpu_memory_utilization: 0.7
       val_kwargs: # sampling for the evaluation questions
         temperature: 1.0
         top_p: 1.0

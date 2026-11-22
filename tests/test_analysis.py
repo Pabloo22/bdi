@@ -73,6 +73,9 @@ def test_timing_estimate(tmp_path, capsys):
     run = tmp_path / "timing-reverse-k256"
     run.mkdir()
     metrics.to_json(run / "metrics.jsonl", orient="records", lines=True)
+    with pytest.raises(SystemExit, match="did not finish"):
+        timing.main([str(run), "2"])
+    (run / "finished.json").write_text('{"step": 50}\n')
     timing.main([str(run), "2"])
     out = capsys.readouterr().out
     assert "4.00 s" in out and "3.49 h" in out and "$6.98" in out
