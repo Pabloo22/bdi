@@ -31,10 +31,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # it breaks them. The project venv goes on PATH below instead, so `python` is
 # 3.12 for anything a shell on the box actually runs.
 
-# Same Poetry version that wrote poetry.lock.
-ENV POETRY_HOME=/opt/poetry
-ENV PATH="/opt/poetry/bin:$PATH"
-RUN curl -sSL https://install.python-poetry.org | POETRY_VERSION=2.2.1 python3 -
+# Same Poetry version that wrote poetry.lock, in its own venv so its dependencies
+# never mix with the project's; only the `poetry` command goes on PATH. From PyPI
+# with pip rather than install.python-poetry.org's `curl | python3 -`: the install
+# below needs PyPI anyway, and that site can be unreachable while PyPI is not. When
+# it was, curl's failure never reached the shell (a pipe reports only its last
+# command), so python3 ran an empty script and the step "succeeded" without Poetry.
+RUN python3.12 -m venv /opt/poetry && \
+    /opt/poetry/bin/pip install --no-cache-dir poetry==2.2.1 && \
+    ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
 
 # Resolve and install the dependency set at build time rather than on the rental
 # box. Two reasons: `poetry install --with gpu` on a fresh instance downloads and
