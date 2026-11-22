@@ -53,6 +53,8 @@ def summary(df: pd.DataFrame, questions: int = 50) -> pd.DataFrame:
     out = []
     for run, rows in df.groupby("run", sort=False):
         evaluated = rows.dropna(subset=["student"])
+        if evaluated.empty:  # evaluated on fewer questions, like the smoke test
+            continue
         first, last = evaluated.iloc[0], evaluated.iloc[-1]
         out.append(
             {

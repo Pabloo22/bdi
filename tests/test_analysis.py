@@ -39,9 +39,12 @@ def test_summary_and_curves(tmp_path, capsys):
           "eval/teacher/q50/eagle": 1.0, "eval/student/q10/eagle": 0.1}],
         finished=False,
     )  # fmt: skip
+    # Evaluated on 3 questions only, like the smoke test: left out of the 50-question summary.
+    fake_run(tmp_path, ["teacher.animal=penguin"], [{"step": 0, "eval/student/q3/penguin": 0.0}])
 
     df = e0.load_runs(tmp_path)
     table = e0.summary(df).set_index("run")
+    assert "penguin-reverse-k256-s42" not in table.index
     owl = table.loc["owl-reverse-k256-s42"]
     assert (owl.base, owl.teacher, owl.final, owl.final_step) == (0.01, 0.9, 0.7, 2)
     eagle = table.loc["eagle-reverse-k256-s43"]
