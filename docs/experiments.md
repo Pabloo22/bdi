@@ -380,9 +380,10 @@ Taken on 2026-11-21:
    and CUDA 12.8, as in the vendored `setup_b200.sh`.
 3. **Vendored code.** Wrap it, never edit it (section 6).
 
-Proposed, not yet needed (E0 measures animal names without a judge):
+Taken on 2026-11-22:
 
-4. **Judge model.** Qwen3.8-27B, the judge of the soft-distillation paper, with thinking turned off.
+4. **Budget.** The whole project should cost under $1,000 in rented GPUs.
+5. **Judge model.** Qwen3.8-27B, the judge of the soft-distillation paper, with thinking turned off.
    Same judge, so our misalignment rates can be compared with theirs. Open weights, so results stay
    reproducible when API models change or retire. Local, so it can return token probabilities: the
    score can then be the probability-weighted average of 0–100, which is steadier than one sampled
